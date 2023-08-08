@@ -4,8 +4,8 @@
 
 from setuptools import setup
 setup(
-    name="pycodehash",
-    version="0.0.1",
+    name="naist-codehash",
+    version="0.0.3",
     description="Support the use of CodeHash, a tool for measuring similarity between source code, from Python.",
     author="Kazuki F.",
     author_email="doradora.prog@gmail.com",
