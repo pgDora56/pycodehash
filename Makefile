@@ -7,5 +7,8 @@ compile:
 upload:
 	twine upload --repository pypi dist/*
 
+test:
+	python3 -m unittest discover tests
+
 clear:
 	rm -Rf naist_codehash.egg-info dist

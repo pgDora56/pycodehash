@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import shutil
 import subprocess
@@ -6,17 +7,80 @@ import uuid
 
 
 class CodeHash:
-    def __init__(self, codehash_path, id_key="_id"):
+    def __init__(self, codehash_path, id_key="_id", py_command="python3"):
         self.CODEHASH_PATH = codehash_path
-        self.codehash_cache = {}
         self.ID_KEY = id_key
+        self.PYTHON_COMMAND = py_command
+        self.codehash_cache = {}
 
-    def codehash(
+    def compare(
             self,
-            code1: str,
-            code2: str,
+            codes: list[str],
             metrics=None,  # str or list
-            n: int = None):
+            n: int = None) -> object:
+        if os.path.exists("./tmp"):
+            shutil.rmtree("./tmp")
+        os.makedirs("tmp")
+
+        files = []
+        for c in codes:
+            id_key = str(uuid.uuid4())
+            fname = "tmp/" + id_key + ".py"
+            with open(fname, "w") as f:
+                f.write(c)
+            files.append(fname)
+        jsdata = self.compare_files(files, metrics, n)
+        shutil.rmtree("./tmp")
+        return jsdata
+
+    def compare_with_id(
+            self,
+            code_structs: list[dict],
+            # code_struct2: dict,
+            metrics=None,  # str or list
+            n: int = None) -> object:
+        """
+        `codestruct` required `_id` field and `code` field.
+        """
+
+        code_structs.sort(key=lambda x: x[self.ID_KEY])
+
+        codehash_ids = []
+        for cs in code_structs:
+            codehash_ids.append(cs[self.ID_KEY])
+        codehash_id = ":".join(codehash_ids)
+        if metrics is not None:
+            if isinstance(metrics, list):
+                metrics.sort()
+                codehash_id += "-" + ",".join(metrics)
+            elif isinstance(metrics, str):
+                codehash_id += "-" + metrics
+            else:
+                raise Exception("unknown metrics")
+        if n is not None:
+            codehash_id += "-" + str(n)
+
+        if codehash_id in self.codehash_cache:
+            return self.codehash_cache[codehash_id]
+
+        if os.path.exists("./tmp"):
+            shutil.rmtree("./tmp")
+        os.makedirs("tmp")
+        files = []
+        for c in code_structs:
+            fname = "tmp/" + c[self.ID_KEY] + ".py"
+            with open(fname, "w") as f:
+                f.write(c["code"])
+            files.append(fname)
+        jsdata = self.compare_files(files, metrics, n)
+        shutil.rmtree("./tmp")
+        return jsdata
+
+    def compare_files(
+            self,
+            files: list[str],
+            metrics=None,
+            n: int = None) -> object:
         cmd = [
             "java",
             "-classpath",
@@ -32,76 +96,54 @@ class CodeHash:
                 raise Exception("unknown metrics")
         if n is not None:
             cmd.append("-n:" + str(n))
-
-        if os.path.exists("./tmp"):
-            shutil.rmtree("./tmp")
-        os.makedirs("tmp")
-        cs = [
-            {
-                self.ID_KEY: str(uuid.uuid4()),
-                "code": code1,
-            },
-            {
-                self.ID_KEY: str(uuid.uuid4()),
-                "code": code2,
-            },
-        ]
-        for submit in cs:
-            fname = "tmp/" + submit[self.ID_KEY] + ".py"
-            with open(fname, "w") as f:
-                f.write(submit["code"])
-            cmd.append(fname)
+        cmd.extend(files)
         res = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
         sout = res.stdout.decode("utf8")
         jsdata = json.loads(sout)
-        shutil.rmtree("./tmp")
-        return jsdata["Pairs"][0]
+        return jsdata
 
-    def codehash_with_id(
-            self,
-            code_struct1: dict,
-            code_struct2: dict,
-            metrics=None,  # str or list
-            n: int = None):
-        """
-        `codestruct` required `_id` field and `code` field.
-        """
-        if code_struct1[self.ID_KEY] > code_struct2[self.ID_KEY]:  # swap
-            code_struct1, code_struct2 = code_struct2, code_struct1
-
-        codehash_id = code_struct1[self.ID_KEY] + \
-            ":" + code_struct2[self.ID_KEY]
+    def compare_directory(
+        self,
+        dirs: list[str],
+        metrics=None,
+        n: int = None,
+    ) -> object:
+        cmd = [
+            "java",
+            "-classpath",
+            self.CODEHASH_PATH,
+            "jp.naist.se.codehash.comparison.DirectComparisonMain",
+        ]
+        for d in dirs:
+            if d.endswith("/"):
+                d = d[:-1]
+            cmd.append(f"-dir{os.path.basename(d)}:{d}")
+        cmd.append("-compare:crossgroup")
         if metrics is not None:
             if isinstance(metrics, list):
-                metrics.sort()
-                codehash_id += "-" + ",".join(metrics)
+                cmd.append("-metrics:" + ",".join(metrics))
             elif isinstance(metrics, str):
-                codehash_id += "-" + metrics
+                cmd.append("-metrics:" + metrics)
             else:
                 raise Exception("unknown metrics")
         if n is not None:
-            codehash_id += "-" + str(n)
+            cmd.append("-n:" + str(n))
 
-        if codehash_id in self.codehash_cache:
-            return self.codehash_cache[codehash_id]
+        res = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        sout = res.stdout.decode("utf8")
+        return json.loads(sout)  # byte->str->json dict
 
-        result = self.codehash(
-            code_struct1["code"],
-            code_struct2["code"],
-            metrics,
-            n)
-        self.codehash_cache[codehash_id] = result
-        return result
-
-    # TODO: Directoryごとに比較するやつが実装されているのでそれを使用するように修正
-    def codehash_cache_get(
+    def cache_get(
             self,
             code_structs,
             metrics: str = None,
-            n: int = None):
+            n: int = None) -> None:
         """
         Accelerate `codehash_with_id` when comparing multiple codes to each other.
         `codestruct` required `_id` field and `code` field.
@@ -153,32 +195,3 @@ class CodeHash:
             if n is not None:
                 cacheid += "-" + str(n)
             self.codehash_cache[cacheid] = pair
-
-    def isValidCode(self, code, ipt="", output_result=False):
-        if not os.path.exists("./tmp"):
-            os.makedirs("tmp")
-        fname = "tmp/tmp.py"
-
-        if os.path.exists(fname):
-            os.remove(fname)
-        with open(fname, "w") as f:
-            f.write(code)
-
-        cmd = ["timeout", "5", "python3", fname]
-        res = subprocess.run(
-            cmd,
-            input=ipt.encode("utf8"),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-
-        if output_result:
-            print("Stdout:", res.stdout.decode("utf8"))
-            print("Stderr:", res.stderr.decode("utf8"))
-        if res.returncode != 0:
-            return False
-        return True
-
-
-if __name__ == "__main__":
-    ch = CodeHash()
-    print(ch.isValidCode("print(input())", "1", "Hello", True))
