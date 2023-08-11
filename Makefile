@@ -7,6 +7,9 @@ compile:
 upload:
 	twine upload --repository pypi dist/*
 
+doc:
+	pdoc --html --output-dir docs --force codehash/
+
 test:
 	python3 -m unittest discover tests
 

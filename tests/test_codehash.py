@@ -51,7 +51,7 @@ class TestCodeHash(TestCase):
             "_id": "3",
             "code": "print('Hell'+'o')"
         }
-        ch.cache_get([c1, c2, c3])
+        ch.make_cache_of_codedatas([c1, c2, c3])
         print(ch.compare_with_id([c1, c2]))
         print(ch.compare_with_id([c1, c2], "jaccard"))
         print(

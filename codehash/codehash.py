@@ -7,10 +7,14 @@ import uuid
 
 
 class CodeHash:
-    def __init__(self, codehash_path, id_key="_id", py_command="python3"):
+    """
+    - `codehash_path` requires path to CodeHash Jar file
+    - [optional] `id_key` requires field name of id in codestruct (default: `_id`)
+    """
+
+    def __init__(self, codehash_path, id_key="_id"):
         self.CODEHASH_PATH = codehash_path
         self.ID_KEY = id_key
-        self.PYTHON_COMMAND = py_command
         self.codehash_cache = {}
 
     def compare(
@@ -18,6 +22,10 @@ class CodeHash:
             codes: list[str],
             metrics=None,  # str or list
             n: int = None) -> object:
+        """Compares source code lists of type `str` with each other.
+
+        - `metrics` requires `str` or `list of str`.
+        """
         if os.path.exists("./tmp"):
             shutil.rmtree("./tmp")
         os.makedirs("tmp")
@@ -39,8 +47,10 @@ class CodeHash:
             # code_struct2: dict,
             metrics=None,  # str or list
             n: int = None) -> object:
-        """
-        `codestruct` required `_id` field and `code` field.
+        """Compares source code(with code's id) lists of type `str` with each other.
+
+        - `codestruct` requires `_id` field and `code` field.
+        - `metrics` requires `str` or `list of str`.
         """
 
         code_structs.sort(key=lambda x: x[self.ID_KEY])
@@ -81,6 +91,11 @@ class CodeHash:
             files: list[str],
             metrics=None,
             n: int = None) -> object:
+        """Compares source code file lists of type str with each other.
+
+        - `files` requires filename's list.
+        - `metrics` requires `str` or `list of str`.
+        """
         cmd = [
             "java",
             "-classpath",
@@ -111,6 +126,11 @@ class CodeHash:
         metrics=None,
         n: int = None,
     ) -> object:
+        """Compares source code directory lists of type `str` with each other.
+
+        - `files` requires filename's list.
+        - `metrics` requires `str` or `list of str`.
+        """
         cmd = [
             "java",
             "-classpath",
@@ -139,14 +159,15 @@ class CodeHash:
         sout = res.stdout.decode("utf8")
         return json.loads(sout)  # byte->str->json dict
 
-    def cache_get(
+    def make_cache_of_codedatas(
             self,
             code_structs,
             metrics: str = None,
             n: int = None) -> None:
         """
         Accelerate `codehash_with_id` when comparing multiple codes to each other.
-        `codestruct` required `_id` field and `code` field.
+
+        - `codestruct` requires `_id` field and `code` field.
         """
         if os.path.exists("./tmp"):
             shutil.rmtree("./tmp")
