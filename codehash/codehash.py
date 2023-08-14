@@ -162,12 +162,13 @@ class CodeHash:
     def make_cache_of_codedatas(
             self,
             code_structs,
-            metrics: str = None,
+            metrics=None,
             n: int = None) -> None:
         """
         Accelerate `codehash_with_id` when comparing multiple codes to each other.
 
         - `codestruct` requires `_id` field and `code` field.
+        - `metrics` requires `str` or `list of str`.
         """
         if os.path.exists("./tmp"):
             shutil.rmtree("./tmp")

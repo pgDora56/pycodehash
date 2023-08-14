@@ -190,12 +190,13 @@ class CodeHash:
     def make_cache_of_codedatas(
             self,
             code_structs,
-            metrics: str = None,
+            metrics=None,
             n: int = None) -&gt; None:
         &#34;&#34;&#34;
         Accelerate `codehash_with_id` when comparing multiple codes to each other.
 
         - `codestruct` requires `_id` field and `code` field.
+        - `metrics` requires `str` or `list of str`.
         &#34;&#34;&#34;
         if os.path.exists(&#34;./tmp&#34;):
             shutil.rmtree(&#34;./tmp&#34;)
@@ -424,12 +425,13 @@ class CodeHash:
     def make_cache_of_codedatas(
             self,
             code_structs,
-            metrics: str = None,
+            metrics=None,
             n: int = None) -&gt; None:
         &#34;&#34;&#34;
         Accelerate `codehash_with_id` when comparing multiple codes to each other.
 
         - `codestruct` requires `_id` field and `code` field.
+        - `metrics` requires `str` or `list of str`.
         &#34;&#34;&#34;
         if os.path.exists(&#34;./tmp&#34;):
             shutil.rmtree(&#34;./tmp&#34;)
@@ -679,12 +681,13 @@ class CodeHash:
 </details>
 </dd>
 <dt id="codehash.codehash.CodeHash.make_cache_of_codedatas"><code class="name flex">
-<span>def <span class="ident">make_cache_of_codedatas</span></span>(<span>self, code_structs, metrics: str = None, n: int = None) ‑> None</span>
+<span>def <span class="ident">make_cache_of_codedatas</span></span>(<span>self, code_structs, metrics=None, n: int = None) ‑> None</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Accelerate <code>codehash_with_id</code> when comparing multiple codes to each other.</p>
 <ul>
 <li><code>codestruct</code> requires <code>_id</code> field and <code>code</code> field.</li>
+<li><code>metrics</code> requires <code>str</code> or <code>list of str</code>.</li>
 </ul></div>
 <details class="source">
 <summary>
@@ -693,12 +696,13 @@ class CodeHash:
 <pre><code class="python">def make_cache_of_codedatas(
         self,
         code_structs,
-        metrics: str = None,
+        metrics=None,
         n: int = None) -&gt; None:
     &#34;&#34;&#34;
     Accelerate `codehash_with_id` when comparing multiple codes to each other.
 
     - `codestruct` requires `_id` field and `code` field.
+    - `metrics` requires `str` or `list of str`.
     &#34;&#34;&#34;
     if os.path.exists(&#34;./tmp&#34;):
         shutil.rmtree(&#34;./tmp&#34;)
